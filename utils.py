@@ -3,6 +3,29 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 
+class InteractiveConvolutionBlock2D(nn.Module):
+    def __init__(self, in_channels, out_channels, drop=0.):
+        super(InteractiveConvolutionBlock2D, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=2)
+        self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=1)
+        self.drop = nn.Dropout(drop)
+        self.act = nn.GELU()
+
+    def forward(self, x):
+        x1 = self.act(self.conv1(x))
+        x1_1 = self.drop(x1)
+
+        x2 = self.act(self.conv2(x))
+        x2_1 = self.drop(x2)
+
+        out1 = x1 * x2_1
+        out2 = x2 * x1_1
+
+        x = self.conv3(out1 + out2)
+        return x
+
+
 class KANLinear(nn.Module):
     def __init__(
         self,
